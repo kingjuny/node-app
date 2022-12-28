@@ -1,5 +1,5 @@
 <%- include ('../layouts/header') -%>
-<form>
+<form method="post" action="/process/adduser">
     <div class="row my-3 mx-5 mt-5">
         <label for="inputnickname3" class="col-sm-2 col-form-label">Name</label>
         <div class="col-sm-10">
@@ -21,7 +21,7 @@
     <div class="row my-3 mx-5">
         <label for="inputPassword3" class="col-sm-2 col-form-label">Password 확인</label>
         <div class="col-sm-10">
-          <input type="password" class="form-control" id="inputPassword3">
+          <input type="password" class="form-control" id="reinputPassword3">
         </div>
       </div>
     
@@ -35,6 +35,6 @@
         </div>
       </div>
     </div>
-    <button type="submit" class="btn btn-primary row my-3 mx-5">Sign in</button>
+    <input type="submit" class="btn btn-primary row my-3 mx-5" value="Sign up">
   </form>
   <%- include ('../layouts/footer') -%>

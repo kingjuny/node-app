@@ -3,9 +3,15 @@ const express = require('express');
 const mysql = require("mysql");
 const path = require("path");
 const static = require("serve-static");
+const bodyParser = require("body-parser")
 const dbconfig = require("./config/dbconfig.json");
-//데이터베이스 커넥션 풀
-const pool = mysql.createPool({
+
+/*
+var authRouter = require('./lib_login/auth');
+var authCheck = require('./lib_login/authCheck.js');*/
+
+// DB 커넥션 생성
+const connection = mysql.createConnection({
     connectionLimit: 10,
     host: dbconfig.host,
     user: dbconfig.user,
@@ -13,16 +19,27 @@ const pool = mysql.createPool({
     database: dbconfig.database,
     debug:false
 });
+// DB 접속
+connection.connect();
+
 const app = express();
 const port = 3000;
+const router = express.Router();
+app.use(bodyParser.urlencoded({extended:true}));
+app.use(bodyParser.json());
+
+
+
+
 //뷰 설정
 app.set("views","./views");
 
 app.set("view engine","ejs");
+
+
+
+
 //라우팅
-app.post("/process/adduser",(req,res) => {
-    console.log("/process/adduser호출됨"+req)
-});
 app.get("/",(req,res) => {
     res.render('pages/home');
 });
@@ -42,6 +59,14 @@ app.get("/project_introduction",(req,res) => {
 app.get("/about_me",(req,res) => {
     res.render('pages/about_me');
 });
+app.post("/process/adduser",(req,res)=>{
+    const param = [req.body.email,req.body.name,req.body.age,req.body.password]
+    connection.query('INSERT INTO `nodeapp`.`users` (`id`, `name`, `age`, `password`) VALUES (?,?,?,?);',param,(err,row) =>{
+        if(err) console.log(err);
+    })
+        
+});
+
 
 //서버3000포트 리슨중
 app.listen(port, () =>{

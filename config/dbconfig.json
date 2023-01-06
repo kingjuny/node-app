@@ -1,6 +1,6 @@
 {
-    "host":"122.32.33.22",
-    "user":"abmin",
+    "host":"127.0.0.1",
+    "user":"root",
     "password":"khj6560",
     "database":"nodeapp",
     "debug":false

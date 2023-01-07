@@ -3,12 +3,14 @@ const express = require('express');
 const mysql = require("mysql");
 const path = require("path");
 const static = require("serve-static");
+const crypto = require("crypto");
 const bodyParser = require("body-parser")
 const dbconfig = require("./config/dbconfig.json");
 
 /*
 var authRouter = require('./lib_login/auth');
 var authCheck = require('./lib_login/authCheck.js');*/
+const salt = crypto.randomBytes(32).toString('base64')// 솔트 생성
 
 // DB 커넥션 생성
 const connection = mysql.createConnection({
@@ -60,11 +62,12 @@ app.get("/about_me",(req,res) => {
     res.render('pages/about_me');
 });
 app.post("/process/adduser",(req,res)=>{
-    const param = [req.body.email,req.body.name,req.body.age,req.body.password]
+    const hashedPw = crypto.pbkdf2Sync(req.body.password, salt, 1, 32, 'sha512').toString('base64')
+    const param = [req.body.email,req.body.name,req.body.age,hashedPw]
+    console.log(`salt : ${salt} , hashedPW1: ${hashedPw}`)
     connection.query('INSERT INTO `nodeapp`.`users` (`id`, `name`, `age`, `password`) VALUES (?,?,?,?);',param,(err,row) =>{
         if(err) console.log(err);
     })
-        
 });
 
 

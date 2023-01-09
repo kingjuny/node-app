@@ -10,7 +10,7 @@ const dbconfig = require("./config/dbconfig.json");
 /*
 var authRouter = require('./lib_login/auth');
 var authCheck = require('./lib_login/authCheck.js');*/
-const salt = crypto.randomBytes(32).toString('base64')// 솔트 생성
+
 
 // DB 커넥션 생성
 const connection = mysql.createConnection({
@@ -62,10 +62,11 @@ app.get("/about_me",(req,res) => {
     res.render('pages/about_me');
 });
 app.post("/process/adduser",(req,res)=>{
+    const salt = crypto.randomBytes(32).toString('base64')// 솔트 생성
     const hashedPw = crypto.pbkdf2Sync(req.body.password, salt, 1, 32, 'sha512').toString('base64')
-    const param = [req.body.email,req.body.name,req.body.age,hashedPw]
+    const param = [req.body.email,req.body.name,req.body.age,hashedPw,salt]
     console.log(`salt : ${salt} , hashedPW1: ${hashedPw}`)
-    connection.query('INSERT INTO `nodeapp`.`users` (`id`, `name`, `age`, `password`) VALUES (?,?,?,?);',param,(err,row) =>{
+    connection.query('INSERT INTO `nodeapp`.`users` (`id`, `name`, `age`, `password`, `salt`) VALUES (?,?,?,?,?);',param,(err,row) =>{
         if(err) console.log(err);
     })
 });

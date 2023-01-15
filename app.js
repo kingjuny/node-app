@@ -4,8 +4,11 @@ const mysql = require("mysql");
 const path = require("path");
 const static = require("serve-static");
 const crypto = require("crypto");
-const bodyParser = require("body-parser")
+const bodyParser = require("body-parser");
+const session = require("express-session");
+const mySQLstore = require("express-mysql-session")(session);
 const dbconfig = require("./config/dbconfig.json");
+const { Cookie } = require('express-session');
 
 /*
 var authRouter = require('./lib_login/auth');
@@ -30,6 +33,13 @@ const connection = mysql.createConnection({
 // DB 접속
 connection.connect();
 
+app.use(session({
+    secret : '!@#$%^&*',
+    store : new mySQLstore(dbconfig),
+    resave : false,
+    saveUninitialized : false,
+    
+}));
 
 
 
@@ -43,24 +53,55 @@ app.set("view engine","ejs");
 
 //라우팅
 app.get("/",(req,res) => {
-    res.render('pages/home');
+    if(req.session.user===undefined)
+        res.redirect("/login");
+    else{
+        console.log(req.session.id)
+        console.log(req.session.user)
+        res.render('pages/home');
+    }
 });
 
 app.get("/login",(req,res) => {
-    res.render('pages/login');
+    if(req.session.user!==undefined)
+        res.redirect("/");
+    else{
+        res.render('pages/login');
+    }
 });
 
 app.get("/signup",(req,res) => {
-    res.render('pages/signup');
+    if(req.session.user!==undefined)
+        res.redirect("/");
+    else{
+        res.render('pages/signup');
+    }
 });
 
 app.get("/project_introduction",(req,res) => {
-    res.render('pages/project_introduction');
+    if(req.session.user===undefined)
+        res.redirect("/login");
+    else{
+        res.render('pages/project_introduction');
+    }
+    
 });
 
 app.get("/about_me",(req,res) => {
-    res.render('pages/about_me');
+    if(req.session.user===undefined)
+        res.redirect("/login");
+    else{
+        res.render('pages/about_me');
+    }
+    
 });
+
+app.get("/logout",(req,res)=>{
+    req.session.destroy(function(err){
+        res.redirect('/login')
+    })
+})
+//로그인 요청
 app.post("/login",bodyParser.json(),(req,res)=>{
     const loginid =req.body.loginEmail;
     const loginpassword =req.body.loginPassword;
@@ -71,20 +112,24 @@ app.post("/login",bodyParser.json(),(req,res)=>{
         if(err) 
             console.log(err);
 
-        if(!results[0])
+        if(!results[0]){
             console.log("아이디틀림");
+            res.redirect("/login")
             res.write("<script>alert('아이디를 확인하세요')</script>");
+        }
         const user = results[0];
         crypto.pbkdf2(loginpassword,user.salt, 1, 32, 'sha512',(err,derivedkey)=>{
             if(err) console.log(err);
 
             if(derivedkey.toString('base64')===user.password){
                 console.log("성공");
-                res.render('pages/home');
+                req.session.user = loginid;
+                res.redirect('/');
             }
             else{
                 console.log("pw틀림");
-                res.write("<script>alert('비밀번호를 확인하세요')</script>");
+                res.redirect("/login")
+                //res.write("<script>alert('비밀번호를 확인하세요')</script>");
             }
         });
     });
@@ -109,7 +154,7 @@ app.post("/signup",(req,res)=>{
                 console.log(err);
             console.log(`${name} 회원가입 성공`)
         });
-        res.redirect('pages/login');
+        res.redirect('/login');
     };
 });
 

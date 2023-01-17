@@ -58,7 +58,27 @@ app.get("/",(req,res) => {
     else{
         console.log(req.session.id)
         console.log(req.session.user)
+        res.render('pages/project_introduction');
+    }
+});
+
+app.get("/board",(req,res) => {
+    if(req.session.user===undefined)
+        res.redirect("/login");
+    else{
+        console.log(req.session.id)
+        console.log(req.session.user)
         res.render('pages/home');
+    }
+});
+
+app.get("/board/write",(req,res) => {
+    if(req.session.user===undefined)
+        res.redirect("/login");
+    else{
+        console.log(req.session.id)
+        console.log(req.session.user)
+        res.render('pages/writeboard');
     }
 });
 
@@ -115,7 +135,7 @@ app.post("/login",bodyParser.json(),(req,res)=>{
         if(!results[0]){
             console.log("아이디틀림");
             res.redirect("/login")
-            res.write("<script>alert('아이디를 확인하세요')</script>");
+            res.write("<script>alert('아이디를 확인하세요')</script>");     
         }
         const user = results[0];
         crypto.pbkdf2(loginpassword,user.salt, 1, 32, 'sha512',(err,derivedkey)=>{
@@ -124,14 +144,17 @@ app.post("/login",bodyParser.json(),(req,res)=>{
             if(derivedkey.toString('base64')===user.password){
                 console.log("성공");
                 req.session.user = loginid;
-                res.redirect('/');
+                res.redirect('/',{
+                    user : req.session.user 
+                });
             }
             else{
                 console.log("pw틀림");
                 res.redirect("/login")
+  
                 //res.write("<script>alert('비밀번호를 확인하세요')</script>");
             }
-        });
+        });  
     });
 });
 

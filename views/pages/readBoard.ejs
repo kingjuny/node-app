@@ -1,136 +1,46 @@
-<%- include ('../layouts/header') -%>
+<%- include('../layouts/header') -%>
+<% const insertTime = new Date(article.insert_time);
+const year = insertTime.getFullYear();
+const month = insertTime.getMonth() + 1; // 월은 0부터 시작하므로 1을 더해줍니다.
+const date = insertTime.getDate();
+const formattedDate = `${year}년 ${month}월 ${date}일`; %>
     <div class="input-group mb-3">
         <span class="input-group-text" id="basic-addon1">제목</span>
-        <input type="text" id='title' class="form-control" aria-label="Username" aria-describedby="basic-addon1"
-            readonly>
+        <input type="text" id='title' class="form-control" aria-label="Username" aria-describedby="basic-addon1" value=<%= article.title %> readonly>
     </div>
     <div class="input-group mb-3">
         <span class="input-group-text" id="basic-addon1">작성자명</span>
-        <input type="text" id='name' class="form-control" aria-label="Username" aria-describedby="basic-addon1"
-            readonly>
+        <input type="text" id='name' class="form-control" aria-label="Username" aria-describedby="basic-addon1" value=<%= article.writer %> readonly>
     </div>
     <div class="input-group mb-3">
         <span class="input-group-text" id="basic-addon1">작성날짜</span>
-        <input type="text" id='day' class="form-control" aria-label="Username" aria-describedby="basic-addon1" readonly>
+        <input type="text" id='day' class="form-control" aria-label="Username" aria-describedby="basic-addon1" value="<%= formattedDate %>" readonly> 
     </div>
     <div class="input-group mb-3">
         <span class="input-group-text" id="basic-addon1">내용</span>
-        <input type="text" id='contents' class="form-control" aria-label="Username" aria-describedby="basic-addon1"
-            readonly>
+        <input type="text" id='contents' class="form-control" aria-label="Username" aria-describedby="basic-addon1" value=<%= article.content %> readonly>
     </div>
 
-    <button type="button" id="updateButton" class="btn btn-primary">수정하기</button>
-    <button type="button" id="deleteButton" class="btn btn-danger">삭제하기</button>
-
-    <%- include ('../include/modal') -%>
 
 
-        <script>
-            const queryString = window.location.search;
-            const urlParam = new URLSearchParams(queryString);
-            const boardId = urlParam.get('boardId');
-            let nowButton = "";
+    <% if(logined===article.writer) { %>
+        <button type="button" id="updateButton" class="btn btn-primary" onclick="location.href='/board/update/<%= article.idx %>'">수정하기</button> 
+        <button type="button" id="deleteButton" class="btn btn-danger">삭제하기</button>
+    <% } %>
+    
+    <script>
+        jQuery(document).ready(function() {
+            console.log("ready!"); // 이 줄이 실행되는지 확인해 보세요.
 
-            document.getElementById("updateButton").onclick = function (event) {
-                nowButton = event.target.id;
-                chk_modal();
-            }
-
-            document.getElementById("deleteButton").onclick = function (event) {
-                nowButton = event.target.id;
-                chk_modal();
-            }
-
-            document.addEventListener('DOMContentLoaded', function () {
-                get_readBoard();
-            })
-
-            // 읽어야할 게시글의 정보를 가져옴
-            function get_readBoard() {
-                var read_ajax = new XMLHttpRequest();
-                read_ajax.onload = function () {
-                    if (read_ajax.status == 200 || read_ajax.status == 201) {
-                        const readBoardArr = JSON.parse(read_ajax.responseText)['readBoard'];
-                        let boardId = readBoardArr['boardId'];
-                        let title = readBoardArr['title'];
-                        let name = readBoardArr['name'];
-                        let day = readBoardArr['day'].substring(0, 10);;
-                        let contents = readBoardArr['contents'];
-                        let passWord = readBoardArr['passWord'];
-
-                        var titleInput = document.querySelector('#title');
-                        var nameInput = document.querySelector('#name');
-                        var dayInput = document.querySelector('#day');
-                        var contentsInput = document.querySelector('#contents');
-
-                        titleInput.setAttribute('value', title);
-                        nameInput.setAttribute('value', name);
-                        dayInput.setAttribute('value', day);
-                        contentsInput.setAttribute('value', contents);
-                    }
+            jQuery('#deleteButton').click(function() {
+                var result = confirm('게시글을 삭제하시겠습니까?');
+                if (result) {
+                    jQuery.post('/board/delete/' + '<%= article.idx %>', function(data) {
+                    alert('게시글이 삭제되었습니다.');
+                    location.href = '/board';
+                    });
                 }
-
-                read_ajax.onerror = function () {
-                    console.error(read_ajax.responseText);
-                }
-
-                read_ajax.open('GET', '/api/readBoard/' + boardId);
-                read_ajax.send();
-            }
-
-
-            // 비밀번호 입력 모달 열기
-            function chk_modal(id) {
-                var button_id = id;
-                var myChkModal = new bootstrap.Modal(document.getElementById("chkPassword"), {});
-                myChkModal.show();
-            }
-
-
-            // 모달에서 확인 버튼을 누르면 함수 실행
-            function chkPassWord(inputPW) {
-                var chk_ajax = new XMLHttpRequest();
-                var myModal = new bootstrap.Modal(document.getElementById("noticeModal"), {});
-                var myWrongModal = new bootstrap.Modal(document.getElementById("wrongModal"), {});
-
-                chk_ajax.onload = function () {
-                    if (chk_ajax.status == 200 || chk_ajax.status == 201) {
-
-                        responseTxt = JSON.parse(chk_ajax.responseText)
-
-                        if (responseTxt['result'] == 'success' && nowButton == 'updateButton') {
-                            location.href = '/updateBoard/?boardId=' + boardId;
-
-                        } else if (responseTxt['result'] == 'success' && nowButton == 'deleteButton') {
-                            const modalTitle = document.querySelector('#msgTitle');
-                            var mtTxt = document.createTextNode(responseTxt['modal_title']);
-                            modalTitle.appendChild(mtTxt);
-
-                            const modalBody = document.querySelector('#msgbody');
-                            var mbTxt = document.createTextNode(responseTxt['modal_body']);
-                            modalBody.appendChild(mbTxt);
-
-                            myModal.show();
-
-                        } else {
-                            myWrongModal.show();
-                        }
-                    }
-                }
-
-                const data = {
-                    boardId: boardId,
-                    passWord: inputPW,
-                    nowButton: nowButton
-                }
-
-                chk_ajax.onerror = function () {
-                    console.error(chk_ajax.responseText);
-                }
-
-                chk_ajax.open('POST', '/api/chkPassWord');
-                chk_ajax.setRequestHeader('Content-Type', 'application/json');
-                chk_ajax.send(JSON.stringify(data));
-            }
-        </script>
-<%- include ('../layouts/footer') -%>
+            });
+        });
+    </script>
+<%- include('../layouts/footer') -%>
